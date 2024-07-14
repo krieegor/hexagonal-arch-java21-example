@@ -1,33 +1,104 @@
-HELP.md
-target/
+# Maven
+/target/
 !.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+**/mvnw
+**/mvnw.cmd
+**/.mvn/wrapper
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
-
-### IntelliJ IDEA ###
-.idea
+# IntelliJ IDEA
+/.idea
 *.iws
 *.iml
 *.ipr
+out/
 
-### NetBeans ###
+# Eclipse
+/.metadata
+/.recommenders
+**/bin/
+**/tmp/
+*.bak
+*.swp
+
+# NetBeans
 /nbproject/private/
+/build/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# VS Code
 .vscode/
+
+# macOS
+.DS_Store
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# Logs
+/logs
+*.log
+
+# Spring Boot
+/spring-boot-configuration-metadata.json
+
+# Environment variables
+.env
+
+# Build directories
+/build/
+
+# Dependency directories
+/node_modules/
+jspm_packages/
+
+# IDE specific
+.idea/
+*.iml
+*.ipr
+*.iws
+*.class
+
+# Compiled class files
+*.class
+
+# Package Files #
+*.jar
+*.war
+*.nar
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
+# Generated files
+*.log
+*.tmp
+*.bak
+*.swp
+
+# Maven specific
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+pom.xml.next
+release.properties
+
+# Gradle specific
+.gradle
+build/
+
+# Other
+!**/src/main/**/application.properties
+!**/src/main/**/application.yml
+!**/src/test/**/application.properties
+!**/src/test/**/application.yml
