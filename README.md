@@ -64,8 +64,8 @@ URL: /api/contacts/register
 Method: POST
 Request Body:
 {
-  "name": "John Doe",
-  "email": "john.doe@example.com",
+  "name": "João Paulo",
+  "email": "joao.paulo@email.com",
   "phoneNumber": "1234567890"
 }
 Response: 200 OK
@@ -78,8 +78,8 @@ Response:
 [
   {
     "id": 1,
-    "name": "John Doe",
-    "email": "john.doe@example.com",
+    "name": "João Paulo",
+    "email": "joao.paulo@email.com",
     "phoneNumber": "1234567890"
   }
 ]
