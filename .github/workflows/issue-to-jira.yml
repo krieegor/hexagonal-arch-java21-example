@@ -1,0 +1,85 @@
+name: Issue to Jira
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  issues: write
+
+jobs:
+  create-jira-ticket:
+    name: Create Jira ticket
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Create Jira issue
+        id: jira
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_EMAIL: ${{ secrets.JIRA_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          JIRA_PROJECT_KEY: ${{ secrets.JIRA_PROJECT_KEY }}
+          # Opcionais (repository variables). Exemplos:
+          #   JIRA_ISSUE_TYPE   = nome do tipo no Jira (padrao: Task). No sandbox em pt-BR: Tarefa
+          #   JIRA_EXTRA_FIELDS = JSON mesclado em "fields" (components, fixVersions, customfield_*)
+          JIRA_ISSUE_TYPE: ${{ vars.JIRA_ISSUE_TYPE }}
+          JIRA_EXTRA_FIELDS: ${{ vars.JIRA_EXTRA_FIELDS }}
+          # Conteudo da issue e controlado por usuarios: sempre via env, nunca interpolado no script.
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_URL: ${{ github.event.issue.html_url }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+        run: |
+          set -euo pipefail
+          : "${JIRA_BASE_URL:?secret JIRA_BASE_URL is required}"
+          : "${JIRA_EMAIL:?secret JIRA_EMAIL is required}"
+          : "${JIRA_API_TOKEN:?secret JIRA_API_TOKEN is required}"
+          : "${JIRA_PROJECT_KEY:?secret JIRA_PROJECT_KEY is required}"
+
+          base_url="${JIRA_BASE_URL%/}"
+          issue_type="${JIRA_ISSUE_TYPE:-Task}"
+          extra="${JIRA_EXTRA_FIELDS:-}"; [ -n "$extra" ] || extra='{}'
+
+          description="$(printf 'Issue aberta por *%s* no GitHub: %s\n\n{noformat}\n%s\n{noformat}' \
+            "$ISSUE_AUTHOR" "$ISSUE_URL" "${ISSUE_BODY:0:20000}")"
+
+          payload="$(jq -n \
+            --arg project "$JIRA_PROJECT_KEY" \
+            --arg summary "[GH] ${ISSUE_TITLE:0:240}" \
+            --arg description "$description" \
+            --arg issuetype "$issue_type" \
+            --argjson extra "$extra" \
+            '{fields: ({
+                project:   {key: $project},
+                summary:   $summary,
+                description: $description,
+                issuetype: {name: $issuetype},
+                labels:    ["github"]
+              } + $extra)}')"
+
+          status="$(curl -sS -o response.json -w '%{http_code}' \
+            -u "$JIRA_EMAIL:$JIRA_API_TOKEN" \
+            -H 'Content-Type: application/json' \
+            -X POST "$base_url/rest/api/2/issue" \
+            --data "$payload")"
+
+          if [ "$status" != "201" ]; then
+            echo "Jira respondeu HTTP $status:" >&2
+            cat response.json >&2
+            exit 1
+          fi
+
+          echo "key=$(jq -r .key response.json)" >> "$GITHUB_OUTPUT"
+
+      - name: Comment Jira link on GitHub issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_KEY: ${{ steps.jira.outputs.key }}
+        run: |
+          set -euo pipefail
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --body "Ticket criado no Jira: ${JIRA_BASE_URL%/}/browse/${JIRA_KEY}"
